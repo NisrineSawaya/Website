@@ -1,0 +1,707 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "Nisrine Sawaya (ns28677)"
+date: "April, 22, 2020"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  word_document:
+    toc: yes
+---
+
+
+
+<pre class="r"><code>#Packages
+library(tidyr); library(ggplot2); library(lmtest); library(dplyr); library(tidyverse)
+#Dataset
+#write.csv(USA_arrests,&quot;USAarrests.csv&quot;)
+arrests &lt;- read.csv(&quot;USAarrests.csv&quot;)
+#Tidying Data
+arrests &lt;- arrests%&gt;%select(-X)
+arrests</code></pre>
+<pre><code>## State Murder UrbanPop Location Affiliation Unemployment
+Income
+## 1 Alabama 13.2 58 0 0 5.8 47221
+## 2 Alaska 10.0 48 1 0 6.9 75723
+## 3 Arizona 8.1 80 1 0 5.4 57100
+## 4 Arkansas 8.8 50 0 0 4.0 45907
+## 5 California 9.0 91 1 1 5.5 66637
+## 6 Colorado 7.9 78 1 0 3.2 70566
+## 7 Connecticut 3.3 77 3 1 5.1 75923
+## 8 Delaware 5.9 72 2 1 4.5 58046
+## 9 Florida 15.4 80 2 0 4.8 51176
+## 10 Georgia 17.4 60 2 0 5.4 53527
+## 11 Hawaii 5.3 83 1 1 3.0 72133
+## 12 Idaho 2.6 54 1 0 3.8 56564
+## 13 Illinois 10.4 83 4 1 5.8 61386
+## 14 Indiana 7.2 65 3 0 4.4 56094
+## 15 Iowa 2.2 57 4 0 3.6 56247
+## 16 Kansas 6.0 66 4 0 4.0 56810
+## 17 Kentucky 9.7 52 0 0 5.1 45369
+## 18 Louisiana 15.4 66 0 0 6.1 42196
+## 19 Maine 2.1 51 3 1 3.8 50856
+## 20 Maryland 11.3 67 2 1 4.5 73760
+## 21 Massachusetts 4.4 85 3 1 3.9 72266
+## 22 Michigan 12.1 74 3 1 5.0 57091
+## 23 Minnesota 2.7 66 4 1 3.9 70218
+## 24 Mississippi 16.1 44 0 0 5.8 41099
+## 25 Missouri 9.0 70 4 0 4.6 55016
+## 26 Montana 6.0 53 1 0 4.1 57075
+## 27 Nebraska 4.3 62 4 0 3.1 59374
+## 28 Nevada 12.2 81 1 1 5.7 55431
+## 29 New Hampshire 2.1 56 3 0 2.9 76260
+## 30 New Jersey 7.4 89 3 1 5.0 68468
+## 31 New Mexico 11.4 70 1 1 6.6 48451
+## 32 New York 11.1 86 3 1 4.9 61437
+## 33 North Carolina 13.0 45 2 0 5.1 53764
+## 34 North Dakota 0.8 44 4 0 3.1 60184
+## 35 Ohio 7.3 75 3 0 5.0 53985
+## 36 Oklahoma 6.6 68 0 0 4.8 50943
+## 37 Oregon 4.9 67 1 1 4.8 59135
+## 38 Pennsylvania 6.3 72 3 0 5.4 60979
+## 39 Rhode Island 3.4 87 3 1 5.2 61528
+## 40 South Carolina 14.4 48 2 0 5.0 65336
+## 41 South Dakota 3.8 45 4 0 3.0 57450
+## 42 Tennessee 13.2 59 0 0 4.7 51344
+## 43 Texas 12.7 80 0 0 4.6 58146
+## 44 Utah 3.2 80 1 0 3.4 67481
+## 45 Vermont 2.2 32 3 1 3.2 60837
+## 46 Virginia 8.5 63 2 1 4.1 66451
+## 47 Washington 4.0 73 1 1 5.3 70310
+## 48 West Virginia 5.7 39 0 0 6.1 44354
+## 49 Wisconsin 2.6 66 4 1 4.0 59817
+## 50 Wyoming 6.8 60 1 0 5.3 57829</code></pre>
+<p>My data covers the number of murder arrests, unemployment rates, urban population size, average income, location and political affiliation across all 50 states in the USA. No N/As were found in my dataset, therefore I have 50 observations for each variable. My response variable is the “Murder” variable where I wanted to see if any of the other variables play a role in affecting the number of murder arrests across the states. I got the biggest part of my data from a dataset already installed in R studio and added the “Income” and “Unemployment” variables from my first project. I used google to research both of my categorical variables “Location” and “Affiliation” to complete my dataset. The binary variable is “Affilition,” where 0 means red/Replublican and 1 means blue/Democrat. As for the location, 0 means South, 1 means West, 2 means East, 3 means North, and 4 means Midwest.</p>
+<pre class="r"><code>#install.packages(&#39;mvtnorm&#39;), install.packages(&#39;ggExtra&#39;)
+library(mvtnorm); library(ggExtra)
+
+#MANOVA between numeric variables and Location Columns to see if 
+#the location of the state plays a significant role in the findings
+man &lt;- manova(cbind(Murder, UrbanPop, Unemployment, Income)~Location, data=arrests)
+summary(man)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## Location 1 0.2679 4.1168 4 45 0.006304 **
+## Residuals 48
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#Unvariate ANOVA
+summary.aov(man) </code></pre>
+<pre><code>## Response Murder :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Location 1 184.91 184.908 11.919 0.001169 **
+## Residuals 48 744.64 15.513
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response UrbanPop :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Location 1 70.3 70.25 0.3307 0.5679
+## Residuals 48 10196.2 212.42
+##
+## Response Unemployment :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Location 1 8.290 8.2898 10.106 0.002588 **
+## Residuals 48 39.374 0.8203
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response Income :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Location 1 500165994 500165994 6.8789 0.01165 *
+## Residuals 48 3490084814 72710100
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#T-tests
+test &lt;- arrests%&gt;%group_by(Location)%&gt;%
+  summarize(mean(Murder), mean(UrbanPop), mean(Unemployment), mean(Income))
+test</code></pre>
+<pre><code>## # A tibble: 5 x 5
+## Location `mean(Murder)` `mean(UrbanPop)`
+`mean(Unemployment)` `mean(Income)`
+## &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 0 11.3 57.3 5.22 47398.
+## 2 1 7.03 70.6 4.85 62649.
+## 3 2 12.3 62.1 4.77 60294.
+## 4 3 5.74 70.8 4.48 62977
+## 5 4 4.64 62.1 3.9 59611.</code></pre>
+<pre class="r"><code>#Post-Hoc Test
+#install.packages(&#39;vegan&#39;)
+library(vegan)
+pairwise.t.test(arrests$Murder, arrests$Location, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  arrests$Murder and arrests$Location 
+## 
+##   0       1       2       3      
+## 1 0.00679 -       -       -      
+## 2 0.56537 0.00220 -       -      
+## 3 0.00070 0.35457 0.00024 -      
+## 4 0.00018 0.11691 6.7e-05 0.47354
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(arrests$UrbanPop, arrests$Location, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  arrests$UrbanPop and arrests$Location 
+## 
+##   0     1     2     3    
+## 1 0.034 -     -     -    
+## 2 0.499 0.203 -     -    
+## 3 0.035 0.981 0.203 -    
+## 4 0.473 0.168 0.996 0.168
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(arrests$Unemployment, arrests$Location, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  arrests$Unemployment and arrests$Location 
+## 
+##   0      1      2      3     
+## 1 0.3548 -      -      -     
+## 2 0.3400 0.8643 -      -     
+## 3 0.0775 0.3338 0.5170 -     
+## 4 0.0041 0.0231 0.0688 0.1607
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(arrests$Income, arrests$Location, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  arrests$Income and arrests$Location 
+## 
+##   0       1       2       3      
+## 1 1.7e-05 -       -       -      
+## 2 0.00105 0.49527 -       -      
+## 3 1.6e-05 0.91115 0.44404 -      
+## 4 0.00092 0.34272 0.85366 0.30167
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>#Probablity of at least type-I error
+1-(0.95^9) #0.3697506</code></pre>
+<pre><code>## [1] 0.3697506</code></pre>
+<pre class="r"><code>#Bonferroni&#39;s Adjusted Correction (&quot;alpha&quot;)
+0.05/9 #0.005555556</code></pre>
+<pre><code>## [1] 0.005555556</code></pre>
+<p>I used the overall MANOVA test to observe whether my numeric variables (Murder, Income, Unemployment, and UrbanPop) have an effect on my categorical variable “Location.” I got a significance result so I moved to the univariate ANOVA tests to narrow down which of the variables are causing this result obtained. Turned out that unemployment rates and average incomes are dignificantly different depending on the location of the state, which was not too surprising due to the demographic and job market saturation throughout US states. After running all the tests necessary, the total number of tests run turned out to be equal to 9 tests. The overall Type I error remains equal to 0.05. The probability that at least one type I error is arounf 0.37. The Bonferroni adjusted significance level used to keep the overall type I error rate at .05 is around 0.0056. After doing all the tests and still getting the Bonferroni correction around 0.05, we can conclude that only the income and unmployment variables were found to significantly differ from each other before and after adjustment. From the assumptions, there was no correlation between the variables which was beneficial. However, the MANOVA test automatically assumes that the distibution is normal and the sample is random which I think were the 2 biggest violations.</p>
+<pre class="r"><code>#install.packages(&#39;vegan&#39;); install.packages(&#39;lmtest&#39;)
+library(vegan); library(lmtest)
+
+cor(arrests$Murder,arrests$Unemployment)#0.6067134</code></pre>
+<pre><code>## [1] 0.6067134</code></pre>
+<pre class="r"><code>dists &lt;- arrests%&gt;%select(Murder, Unemployment)%&gt;%dist()
+adonis(dists~Affiliation, data=arrests)</code></pre>
+<pre><code>## 
+## Call:
+## adonis(formula = dists ~ Affiliation, data = arrests) 
+## 
+## Permutation: free
+## Number of permutations: 999
+## 
+## Terms added sequentially (first to last)
+## 
+##             Df SumsOfSqs MeanSqs F.Model      R2 Pr(&gt;F)
+## Affiliation  1     38.80  38.801  1.9847 0.03971  0.164
+## Residuals   48    938.42  19.550         0.96029       
+## Total       49    977.22                 1.00000</code></pre>
+<pre class="r"><code>SST&lt;- sum(dists^2)/150 
+SSW&lt;-arrests%&gt;%group_by(Affiliation)%&gt;%select(Unemployment,Murder)%&gt;%
+  do(d=dist(.[2:3],&quot;euclidean&quot;))%&gt;%ungroup()%&gt;% 
+  summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50+ sum(d[[2]]^2)/50)%&gt;%pull
+F_obs&lt;-((SST-SSW)/2)/(SSW/147) #observed F statistic
+
+Fs &lt;- replicate(1000, {
+  new &lt;- arrests%&gt;%mutate(Affiliation= sample(Affiliation))
+  SSW &lt;- SW&lt;-new%&gt;%group_by(Affiliation)%&gt;%select(Unemployment,Murder)%&gt;%
+    do(d=dist(.[2:3],&quot;euclidean&quot;))%&gt;%ungroup()%&gt;% 
+    summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50+ sum(d[[2]]^2)/50)%&gt;%pull
+  ((SST-SSW)/2)/(SSW/147)
+})
+
+{hist(Fs, prob=T);abline(v=F_obs, col=&quot;purple&quot;, add=T)}</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>mean(Fs&gt;F_obs)</code></pre>
+<pre><code>## [1] 0.076</code></pre>
+<p>For this portion of the project, I wanted to test whether greater unemployment rates are associated with greater number of murder arrests across US states. Before applying any randomization tests, the actual correlation between the numeric variables is 0.6067134. After conducting randomization testing and breaking the correlation, I replicated the sample 1000 times to get as much of a randomization effect as possible. For this part, the null hypothesis would be that murder and unemployment are not correlated, therefore they each act independently of each other. The alternative hypothesis however, would indicate that unemployment does indeed affect murder arrest numbers. The actual mean difference is 0.087, which is very small meaning that we can reject the null hypothesis. Therefore, we would be able to conclude that unemployment has a significant effect on the number of murder arrests across all states.From the relative frequency histogram of Fs, it is visible that Fs are notmally distributed between -30 and -40 with right skew and a mean occurring between -36 and -38.</p>
+<pre class="r"><code>#Mean Centering Murder, Income and Urbanpop Variables
+arrests$murder_c &lt;- arrests$Murder-mean(arrests$Murder, na.rm=T) 
+arrests$urbanpop_c &lt;- arrests$UrbanPop-mean(arrests$UrbanPop, na.rm=T)
+arrests$income_c &lt;- arrests$Income-mean(arrests$Income, na.rm=T)
+
+#Linear Regression
+pred &lt;- lm(murder_c~urbanpop_c*income_c, data=arrests, family=&quot;binomial&quot;)
+summary(pred)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = murder_c ~ urbanpop_c * income_c, data =
+arrests,
+## family = &quot;binomial&quot;)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -6.2407 -2.9034 -0.5149 2.4789 8.7572
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 2.278e-01 5.961e-01 0.382 0.70417
+## urbanpop_c 7.790e-02 4.192e-02 1.858 0.06955 .
+## income_c -2.499e-04 6.840e-05 -3.654 0.00066 ***
+## urbanpop_c:income_c -5.038e-06 4.644e-06 -1.085 0.28360
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 3.945 on 46 degrees of freedom
+## Multiple R-squared: 0.2298, Adjusted R-squared: 0.1796
+## F-statistic: 4.576 on 3 and 46 DF, p-value: 0.006919</code></pre>
+<pre class="r"><code>#Plotting murder_c vs income_c vs urbanpop_c (Code from Worksheet #15)
+new1 &lt;- arrests
+new1$urbanpop_c &lt;- mean(arrests$urbanpop_c)
+new1$mean &lt;- predict(pred, new1)
+new1$urbanpop_c &lt;- mean(arrests$urbanpop_c)+sd(arrests$urbanpop_c)
+new1$plus.sd &lt;- predict(pred, new1)
+new1$urbanpop_c &lt;- mean(arrests$urbanpop_c)-sd(arrests$urbanpop_c)
+new1$minus.sd &lt;- predict(pred, new1)
+newint &lt;- new1%&gt;%select(murder_c, urbanpop_c, mean, plus.sd, minus.sd)%&gt;%
+  gather(income_c, value, -murder_c, -urbanpop_c)
+mycols&lt;-c(&quot;#619CFF&quot;,&quot;#F8766D&quot;,&quot;#00BA38&quot;)
+names(mycols)&lt;-c(&quot;-1 sd&quot;,&quot;mean&quot;,&quot;+1 sd&quot;)
+mycols=as.factor(mycols)
+ggplot(arrests,aes(income_c, murder_c),group=mycols)+
+  geom_point()+geom_line(data=new1,aes(y=mean,color=&quot;mean&quot;))+
+  geom_line(data=new1,aes(y=plus.sd,color=&quot;+1 sd&quot;))+
+  geom_line(data=new1,aes(y=minus.sd,color=&quot;-1 sd&quot;))+scale_color_manual(values=mycols)+
+  labs(color=&quot;UrbanPop&quot;)+theme(legend.position=c(.9,.2))</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Checking for linearity, normality, and homoskedasticity
+shapiro.test(arrests$urbanpop_c); shapiro.test(arrests$murder_c); shapiro.test(arrests$income_c)</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  arrests$urbanpop_c
+## W = 0.97714, p-value = 0.4385</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  arrests$murder_c
+## W = 0.95703, p-value = 0.06674</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  arrests$income_c
+## W = 0.97145, p-value = 0.2649</code></pre>
+<pre class="r"><code>plot(pred)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-2.png" width="768" style="display: block; margin: auto;" /><img src="/project2_files/figure-html/unnamed-chunk-4-3.png" width="768" style="display: block; margin: auto;" /><img src="/project2_files/figure-html/unnamed-chunk-4-4.png" width="768" style="display: block; margin: auto;" /><img src="/project2_files/figure-html/unnamed-chunk-4-5.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Recomputing Regression
+#install.packages(&#39;microbenchmark&#39;); install.packages(&#39;sandwich&#39;)
+library(sandwich); library(microbenchmark);library(lmtest) 
+coeftest(pred,vcov=vcovHC(pred, family=&#39;binomial&#39;(link=&#39;logit&#39;)))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 2.2775e-01 6.6516e-01 0.3424 0.733607
+## urbanpop_c 7.7902e-02 4.9931e-02 1.5602 0.125565
+## income_c -2.4993e-04 7.3645e-05 -3.3938 0.001428 **
+## urbanpop_c:income_c -5.0381e-06 5.8913e-06 -0.8552
+0.396890
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#Odds Ratio
+exp(coef(pred))</code></pre>
+<pre><code>## (Intercept) urbanpop_c income_c urbanpop_c:income_c
+## 1.2557732 1.0810168 0.9997501 0.9999950</code></pre>
+<pre class="r"><code>#Variation
+odds2prob &lt;- function(odds) { odds/(1 + odds)}</code></pre>
+<p>For the linear regression part of this project, I decided to predict my “Murder” variable from the “Income” and “Unemployment” variables to observe if income and unemployment changes affect the rise or drop of murder arrests across US states. I would like to note that all of the variables used were centered in advance. The intercept coefficient means that the predicted murder arrests (murder_c) across the states is 0.23 when urbanpop_c and income_c are 0. The coefficient of urbanpop_c means that for every 1 unit increase in urban_pop there is a 0.078 increase in murder arrests across US states. The coefficient of income_c means every 1 unit increase in income_c, the number of murder arrests decreases by 0.00025. When thinking about neighborhoods, wealthier ones have lower murder arrests rates than poorer neighborhoods. And usually the wealthy neighborhoods are not found in the rural areas. The coefficient of urbanpop_c:income_c means that the effect of urban_pop on muder_c arrests is lower than the effect of income_c on murder_c arrests.
+The graph generated shows that the income variable affects the number of murder arrests across states more significantly than the urban population variable. At greater UrbanPop levels (+1sd) the decrease in murder arrests is steeper than when UrbanPop is at the mean or -1sd levels. Therefore, average income has a mor significant effect in decreasinf murder rate than UrbanPop.
+After recomputing the regression results, not a lot of changes were observed. However, the p-values of the variables and the intercation slightly increased but the significance of the income_c variable persisted.</p>
+<pre class="r"><code>#Rerunning Regression Model &amp; Boostrapping
+boot &lt;- arrests$murder_c%&gt;%sort+ arrests$urbanpop_c%&gt;%sort+ arrests$income_c%&gt;%sort
+summary(boot)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  -18048   -5302   -1169       0    7082   17189</code></pre>
+<pre class="r"><code>sd(boot)</code></pre>
+<pre><code>## [1] 9042.558</code></pre>
+<pre class="r"><code>boot%&gt;%mean</code></pre>
+<pre><code>## [1] 5.492495e-14</code></pre>
+<pre class="r"><code>samp1&lt;-sample(boot,replace=T) 
+sort(samp1)</code></pre>
+<pre><code>## [1] -13764.128 -11910.728 -11910.728 -8272.628 -5357.328
+-5357.328 -5134.028 -4101.928
+## [9] -4101.928 -3685.428 -3021.028 -3021.028 -2866.628
+-2549.428 -2301.328 -2301.328
+## [17] -2017.028 -2006.728 -2006.728 -1277.128 -958.928
+270.772 716.172 1083.472
+## [25] 1083.472 1738.672 1738.672 1738.672 1880.672
+2434.072 2434.072 7360.972
+## [33] 7549.072 8393.772 11131.372 11482.872 11482.872
+11482.872 11482.872 11482.872
+## [41] 13186.072 13186.072 14682.072 16646.072 16646.072
+16646.072 16646.072 16848.772
+## [49] 16848.772 17189.072</code></pre>
+<pre class="r"><code>mean(samp1)</code></pre>
+<pre><code>## [1] 3351.398</code></pre>
+<pre class="r"><code>means&lt;-vector()
+for(i in 1:5000){
+samp&lt;-sample(boot,replace=T) 
+means[i]&lt;-mean(samp) 
+}
+quantile(means,c(0.025,0.975))</code></pre>
+<pre><code>##      2.5%     97.5% 
+## -2475.504  2595.391</code></pre>
+<pre class="r"><code>ggplot()+geom_histogram(aes(means))+geom_vline(xintercept=quantile(means,c(.025,.975)))</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-5-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Bootstrapping
+sd(means)</code></pre>
+<pre><code>## [1] 1279.545</code></pre>
+<pre class="r"><code>ggplot()+geom_histogram(aes(means))+ geom_vline(xintercept=mean(means)+c(-1,1)*sd(means))</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-5-2.png" width="768" style="display: block; margin: auto;" /></p>
+<p>From both of the graphs in this section, we can conclude that the range of the means have decreased after bootstrapping. The standard deviation value decreased as the mean range increased. Therefore, the relationship between both elements is inverse. Using the bootstrap method definitely narrows down ranges and allows us to focus more on the variables intercating.</p>
+<pre class="r"><code>#Logistic Regression
+#Explaining the binary variable 
+data1 &lt;-arrests%&gt;%mutate(y=ifelse(Affiliation==&quot;democratic&quot;,1,0))
+
+#Predicting political affiliation from murder rate and urbanization across states
+fitt &lt;-glm(Affiliation~Murder+UrbanPop,data=data1,family=&#39;binomial&#39;(link=&quot;logit&quot;))
+coeftest(fitt)</code></pre>
+<pre><code>##
+## z test of coefficients:
+##
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -4.863773 1.891677 -2.5711 0.010136 *
+## Murder -0.162796 0.090726 -1.7944 0.072753 .
+## UrbanPop 0.084518 0.028839 2.9307 0.003382 **
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>exp(coef(fitt))</code></pre>
+<pre><code>## (Intercept)      Murder    UrbanPop 
+## 0.007721298 0.849764852 1.088192774</code></pre>
+<pre class="r"><code>#Confusion Matrix
+prob &lt;-predict(fitt,type=&quot;response&quot;) 
+pred&lt;-ifelse(prob&gt;.5,1,0)
+table(predict=as.numeric(prob&gt;.5),truth=data1$Affiliation)%&gt;%addmargins</code></pre>
+<pre><code>##        truth
+## predict  0  1 Sum
+##     0   25  7  32
+##     1    5 13  18
+##     Sum 30 20  50</code></pre>
+<pre class="r"><code>#Calculating Accuracy, Sensitivity (TPR), Specificity (TNR) and Recall (PPV)
+(25+13)/50 #accuracy</code></pre>
+<pre><code>## [1] 0.76</code></pre>
+<pre class="r"><code>(25/32) #tpr</code></pre>
+<pre><code>## [1] 0.78125</code></pre>
+<pre class="r"><code>(13/18) #tnr</code></pre>
+<pre><code>## [1] 0.7222222</code></pre>
+<pre class="r"><code>(25/30) #ppv</code></pre>
+<pre><code>## [1] 0.8333333</code></pre>
+<pre class="r"><code>#predicted logit (log-odds)
+predict(fitt, newdata=data.frame(Murder=10, UrbanPop=10), type=&quot;link&quot;)</code></pre>
+<pre><code>##         1 
+## -5.646546</code></pre>
+<pre class="r"><code>#predicted probability
+predict(fitt, newdata= data.frame(Murder=10, UrbanPop=10), type=&quot;response&quot;)</code></pre>
+<pre><code>##           1 
+## 0.003517273</code></pre>
+<pre class="r"><code>#ggplot 
+data1$logit&lt;-predict(fitt,type=&quot;link&quot;)
+data1%&gt;%ggplot(aes(logit,color=Affiliation,fill=Affiliation))+
+  geom_density(alpha=.4, color=&quot;red&quot;, fill=&quot;purple&quot;, linetype=&quot;dashed&quot;)+ 
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab(&quot;predictor (logit)&quot;)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#ROC Curve and AUC
+#install.packages(&#39;plotROC&#39;)
+library(plotROC)
+ROCplot&lt;-ggplot(data1)+geom_roc(aes(d=Affiliation, m=prob), n.cuts=0)
+ROCplot</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-6-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCplot) #0.785</code></pre>
+<pre><code>##   PANEL group   AUC
+## 1     1    -1 0.785</code></pre>
+<pre class="r"><code>#class_diag Function
+class_diag&lt;-function(probs,truth) {
+if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth) 
+prediction&lt;-ifelse(probs&gt;.5,1,0) 
+acc=mean(truth==prediction) 
+sens=mean(prediction[truth==1]==1) 
+spec=mean(prediction[truth==0]==0) 
+ppv=mean(truth[prediction==1]==1)
+
+#CALCULATE EXACT AUC
+ord&lt;-order(probs, decreasing=TRUE)
+probs &lt;- probs[ord]; truth &lt;- truth[ord]
+TPR=cumsum(truth)/max(1,sum(truth)) 
+FPR=cumsum(!truth)/max(1,sum(!truth))
+dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE) 
+TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+n &lt;- length(TPR)
+auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+data.frame(acc,sens,spec,ppv,auc) 
+}
+
+#Testing class_diag function
+#install.packages(&quot;pROC&quot;)
+#citation(&quot;pROC&quot;)
+library(pROC)
+class_diag(prob, arrests$Affiliation) </code></pre>
+<pre><code>##    acc sens      spec       ppv   auc
+## 1 0.76 0.65 0.8333333 0.7222222 0.785</code></pre>
+<pre class="r"><code>auc(arrests$Affiliation,prob) #0.785</code></pre>
+<pre><code>## Area under the curve: 0.785</code></pre>
+<pre class="r"><code>#10 Fold
+set.seed(1234)
+k=10 
+data2&lt;-arrests[sample(nrow(arrests)),] 
+folds&lt;-cut(seq(1:nrow(arrests)),breaks=k,labels=F) 
+diags&lt;-NULL 
+for(i in 1:k){
+train&lt;-data2[folds!=i,] 
+test&lt;-data2[folds==i,]
+truth&lt;-test$Affiliation
+fitt1&lt;-glm(Affiliation~Murder+UrbanPop,data=train,family=&quot;binomial&quot;) 
+probs&lt;-predict(fitt1,newdata = test,type=&quot;response&quot;)
+diags&lt;-rbind(diags,class_diag(probs,truth)) 
+}
+summarize_all(diags,mean)</code></pre>
+<pre><code>##    acc      sens      spec       ppv  auc
+## 1 0.72 0.7583333 0.7916667 0.6666667 0.75</code></pre>
+<p>From the coefficient estimate we can conclude that the UrbanPop variable has a significant effect on the political affiliation of the state across the US. After exponentiating the coefficient estimates we can interpret that controlling for UrbanPop, for every 1-unit increase in Murder, odds of political affiliation change by a factor of 0.85. On the other hand, controlling for Murder, for every 1-unit increase in UrbanPop, odds of political affiliation change by a factor of 1.09 which confirms that the UrbanPop variable plays a bigger role when it comes to the state’s affiliation.
+Referencing the methods used on slide 21 in the powerpoint, I calculated and obtained the following values: Accuracy is 0.76, Sensitivity (TPR) is 0.78, Specificity (TNR) is 0.72 and Recall (PPV) is 0.83.
+After generating the ROC curve and calculating the AUC value, it turned out that the area under the curve is equal to 0.785, which is an average value. After performing the 10-Fold, the values obtained slightly decreased. Accuracy became 0.72, Sensitivity decreased to 0.76 and Recall turned out to be 0.67. The decrease in those variables also led to a slight decrease in AUC which ended up being 0.75. However, there was not a drastic change before and after computing the 10-Fold.</p>
+<pre class="r"><code>#LASSO
+#class_diag Function
+class_diag&lt;-function(probs,truth){
+if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) 
+truth&lt;-as.numeric(truth)-1
+tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth) 
+prediction&lt;-ifelse(probs&gt;.5,1,0) 
+acc=mean(truth==prediction) 
+sens=mean(prediction[truth==1]==1) 
+spec=mean(prediction[truth==0]==0) 
+ppv=mean(truth[prediction==1]==1)
+
+#CALCULATE EXACT AUC
+ord&lt;-order(probs, decreasing=TRUE)
+probs &lt;- probs[ord]; truth &lt;- truth[ord]
+TPR=cumsum(truth)/max(1,sum(truth)) 
+FPR=cumsum(!truth)/max(1,sum(!truth))
+dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE) 
+TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+n &lt;- length(TPR)
+auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+data.frame(acc,sens,spec,ppv,auc) 
+}
+
+#install.packages(&quot;glmnet&quot;)
+library(glmnet) 
+fitt2&lt;-glm(Affiliation~Location+UrbanPop+Unemployment+Income+Murder, data=arrests)
+summary(fitt2)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = Affiliation ~ Location + UrbanPop +
+Unemployment +
+## Income + Murder, data = arrests)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -0.68824 -0.34196 -0.05174 0.29840 0.94207
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) -1.581e+00 6.097e-01 -2.592 0.0129 *
+## Location 5.174e-02 5.092e-02 1.016 0.3151
+## UrbanPop 1.102e-02 4.750e-03 2.320 0.0250 *
+## Unemployment 1.346e-01 8.133e-02 1.656 0.1049
+## Income 1.246e-05 8.346e-06 1.493 0.1426
+## Murder -2.648e-02 1.902e-02 -1.392 0.1709
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for gaussian family taken to be
+0.1841197)
+##
+## Null deviance: 12.0000 on 49 degrees of freedom
+## Residual deviance: 8.1013 on 44 degrees of freedom
+## AIC: 64.894
+##
+## Number of Fisher Scoring iterations: 2</code></pre>
+<pre class="r"><code>prob1&lt;-predict(fitt2,type=&quot;response&quot;) 
+library(pROC)
+class_diag(prob1, arrests$Affiliation) </code></pre>
+<pre><code>##    acc sens      spec    ppv       auc
+## 1 0.72 0.55 0.8333333 0.6875 0.8316667</code></pre>
+<pre class="r"><code>auc(arrests$Affiliation,prob1)#0.8317</code></pre>
+<pre><code>## Area under the curve: 0.8317</code></pre>
+<pre class="r"><code>#LASSO Regression
+y&lt;-as.matrix(arrests$Affiliation) 
+x&lt;-model.matrix(Affiliation~.,data=arrests)[,-1]
+head(x)</code></pre>
+<pre><code>## StateAlaska StateArizona StateArkansas StateCalifornia
+StateColorado StateConnecticut
+## 1 0 0 0 0 0 0
+## 2 1 0 0 0 0 0
+## 3 0 1 0 0 0 0
+## 4 0 0 1 0 0 0
+## 5 0 0 0 1 0 0
+## 6 0 0 0 0 1 0
+## StateDelaware StateFlorida StateGeorgia StateHawaii
+StateIdaho StateIllinois StateIndiana
+## 1 0 0 0 0 0 0 0
+## 2 0 0 0 0 0 0 0
+## 3 0 0 0 0 0 0 0
+## 4 0 0 0 0 0 0 0
+## 5 0 0 0 0 0 0 0
+## 6 0 0 0 0 0 0 0
+## StateIowa StateKansas StateKentucky StateLouisiana
+StateMaine StateMaryland StateMassachusetts
+## 1 0 0 0 0 0 0 0
+## 2 0 0 0 0 0 0 0
+## 3 0 0 0 0 0 0 0
+## 4 0 0 0 0 0 0 0
+## 5 0 0 0 0 0 0 0
+## 6 0 0 0 0 0 0 0
+## StateMichigan StateMinnesota StateMississippi
+StateMissouri StateMontana StateNebraska
+## 1 0 0 0 0 0 0
+## 2 0 0 0 0 0 0
+## 3 0 0 0 0 0 0
+## 4 0 0 0 0 0 0
+## 5 0 0 0 0 0 0
+## 6 0 0 0 0 0 0
+## StateNevada StateNew Hampshire StateNew Jersey
+StateNew Mexico StateNew York StateNorth Carolina
+## 1 0 0 0 0 0 0
+## 2 0 0 0 0 0 0
+## 3 0 0 0 0 0 0
+## 4 0 0 0 0 0 0
+## 5 0 0 0 0 0 0
+## 6 0 0 0 0 0 0
+## StateNorth Dakota StateOhio StateOklahoma StateOregon
+StatePennsylvania StateRhode Island
+## 1 0 0 0 0 0 0
+## 2 0 0 0 0 0 0
+## 3 0 0 0 0 0 0
+## 4 0 0 0 0 0 0
+## 5 0 0 0 0 0 0
+## 6 0 0 0 0 0 0
+## StateSouth Carolina StateSouth Dakota StateTennessee
+StateTexas StateUtah StateVermont
+## 1 0 0 0 0 0 0
+## 2 0 0 0 0 0 0
+## 3 0 0 0 0 0 0
+## 4 0 0 0 0 0 0
+## 5 0 0 0 0 0 0
+## 6 0 0 0 0 0 0
+## StateVirginia StateWashington StateWest Virginia
+StateWisconsin StateWyoming Murder UrbanPop
+## 1 0 0 0 0 0 13.2 58
+## 2 0 0 0 0 0 10.0 48
+## 3 0 0 0 0 0 8.1 80
+## 4 0 0 0 0 0 8.8 50
+## 5 0 0 0 0 0 9.0 91
+## 6 0 0 0 0 0 7.9 78
+## Location Unemployment Income murder_c urbanpop_c
+income_c
+## 1 0 5.8 47221 5.412 -7.54 -11885
+## 2 1 6.9 75723 2.212 -17.54 16617
+## 3 1 5.4 57100 0.312 14.46 -2006
+## 4 0 4.0 45907 1.012 -15.54 -13199
+## 5 1 5.5 66637 1.212 25.46 7531
+## 6 1 3.2 70566 0.112 12.46 11460</code></pre>
+<pre class="r"><code>x &lt;- scale(x)
+cv &lt;- cv.glmnet(x,y)
+lasso&lt;-glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se) 
+coef(lasso)</code></pre>
+<pre><code>## 58 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                                s0
+## (Intercept)         -4.174136e-01
+## StateAlaska          .           
+## StateArizona         .           
+## StateArkansas        .           
+## StateCalifornia      .           
+## StateColorado        .           
+## StateConnecticut     .           
+## StateDelaware        .           
+## StateFlorida         .           
+## StateGeorgia         .           
+## StateHawaii          .           
+## StateIdaho           .           
+## StateIllinois        .           
+## StateIndiana         .           
+## StateIowa            .           
+## StateKansas          .           
+## StateKentucky        .           
+## StateLouisiana       .           
+## StateMaine           .           
+## StateMaryland        .           
+## StateMassachusetts   .           
+## StateMichigan        .           
+## StateMinnesota       .           
+## StateMississippi     .           
+## StateMissouri        .           
+## StateMontana         .           
+## StateNebraska        .           
+## StateNevada          .           
+## StateNew Hampshire   .           
+## StateNew Jersey      .           
+## StateNew Mexico      .           
+## StateNew York        .           
+## StateNorth Carolina  .           
+## StateNorth Dakota    .           
+## StateOhio            .           
+## StateOklahoma        .           
+## StateOregon          .           
+## StatePennsylvania    .           
+## StateRhode Island    .           
+## StateSouth Carolina  .           
+## StateSouth Dakota    .           
+## StateTennessee       .           
+## StateTexas           .           
+## StateUtah            .           
+## StateVermont         .           
+## StateVirginia        .           
+## StateWashington      .           
+## StateWest Virginia   .           
+## StateWisconsin       .           
+## StateWyoming         .           
+## Murder               .           
+## UrbanPop             2.585944e-01
+## Location             .           
+## Unemployment         .           
+## Income               1.562559e-01
+## murder_c             .           
+## urbanpop_c           .           
+## income_c             7.337759e-16</code></pre>
+<pre class="r"><code>#Cross Validating the LASSO Model and 10 Fold
+set.seed(1234) 
+k=10
+data3 &lt;- arrests%&gt;% sample_frac 
+folds1 &lt;- ntile(1:nrow(data3),n=10) 
+diags1&lt;-NULL 
+for(i in 1:k){
+train1 &lt;- data3[folds1!=i,] 
+test1 &lt;- data3[folds1==i,] 
+truth1 &lt;- test1$Affiliation
+fitt3 &lt;- glm(Affiliation~UrbanPop+Income+income_c, data=train1, family=&quot;binomial&quot;)
+probs &lt;- predict(fitt3, newdata=test1, type=&quot;response&quot;) 
+diags1 &lt;-rbind(diags1,class_diag(probs,truth1))
+} 
+diags1%&gt;%summarize_all(mean) </code></pre>
+<pre><code>##    acc  sens      spec       ppv       auc
+## 1 0.66 0.675 0.7416667 0.6166667 0.7583333</code></pre>
+<p>LASSO regression indicates that the variables affecting the political affiliation of the states are mainly UrbanPop levels and average Incomes along with income_c. The first AUC obtained from this portion is equal to 0.83 but dropped to 0.77 after the 10-Fold which indicates that the model is more fit. But comparing this model to the previous section the AUC and ACC values are unfortunately very close therefore I did not see any significance or better fit when running the 10-Fold LASSO regression.</p>

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Nisrine Sawaya" />
+    <meta name="description" content="Describe your website">
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
+    <title>Project 1: Exploratory Data Analysis</title>
+    <meta name="generator" content="Hugo 0.70.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/blog/">BLOG</a></li>
+        
+        <li><a href="/projects/">PROJECTS</a></li>
+        
+        <li><a href="/resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/project1/">Project 1: Exploratory Data Analysis</a></strong>
+          </h3>
+        </div>
+        <div class="blog-title">
+          <h4>
+          January 1, 0001
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<p>For this project, I chose to observe different economic variables across all the US states. The first dataset “state” contains both unemployment and uninsured rates of individuals across all 50 states and District of Columbia. The second dataset “rent” covers the rent estimates and the income in dollar amount across the 50 states and District of Columbia. I acquired these datasets from my friend, who is an economics student at UT, because I was interested to observe whether there was any relationship between all the variables mentioned and which variables affected the states the most back in 2016.</p>
+<pre class="r"><code>#Datasets:
+#Dataset #1
+#write.csv(LEstate_data,&quot;statedata.csv&quot;)
+state &lt;- read.csv(&quot;statedata.csv&quot;)
+#Dataset #2
+#write.csv(Rent_Estimate_Across_US_States, &quot;rentdata.csv&quot;)
+rent &lt;- read.csv(&quot;rentdata.csv&quot;)</code></pre>
+<pre class="r"><code>#Tidying
+#install.packages(&quot;tidyverse&quot;)
+library(tidyverse)
+library(tidyr)
+library(dplyr) 
+
+#Tidying Dataset #1
+state1 &lt;- state%&gt;%select(-X)
+untidystate &lt;- state1%&gt;%pivot_wider(names_from= &quot;State&quot;, values_from = &quot;Uninsured&quot;)
+tidystate &lt;- untidystate%&gt;%
+  pivot_longer(cols=c(2:52), names_to = &quot;State&quot;, values_to = &quot;Uninsured&quot;)%&gt;%
+  na.omit()
+state1</code></pre>
+<pre><code>##                   State Uninsured Unemployment
+## 1               Alabama         9          5.8
+## 2                Alaska        14          6.9
+## 3               Arizona        12          5.4
+## 4              Arkansas         8          4.0
+## 5            California         8          5.5
+## 6              Colorado        10          3.2
+## 7           Connecticut         6          5.1
+## 8              Delaware         9          4.5
+## 9  District of Columbia         5          6.1
+## 10              Florida        12          4.8
+## 11              Georgia        12          5.4
+## 12               Hawaii         5          3.0
+## 13                Idaho         9          3.8
+## 14             Illinois         7          5.8
+## 15              Indiana         7          4.4
+## 16                 Iowa         5          3.6
+## 17               Kansas         8          4.0
+## 18             Kentucky         6          5.1
+## 19            Louisiana        11          6.1
+## 20                Maine         7          3.8
+## 21             Maryland         6          4.5
+## 22        Massachusetts         6          3.9
+## 23             Michigan         6          5.0
+## 24            Minnesota         6          3.9
+## 25          Mississippi        12          5.8
+## 26             Missouri         8          4.6
+## 27              Montana         7          4.1
+## 28             Nebraska         7          3.1
+## 29               Nevada         9          5.7
+## 30        New Hampshire         7          2.9
+## 31           New Jersey         6          5.0
+## 32           New Mexico        11          6.6
+## 33             New York         6          4.9
+##  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 18 rows ]</code></pre>
+<pre class="r"><code>#Tidying Dataset #2
+rent1 &lt;-rent%&gt;%select(-X)
+untidyrent &lt;- rent1%&gt;%pivot_wider(names_from= &quot;State&quot;, values_from = &quot;Income&quot;)
+tidyrent &lt;- untidyrent%&gt;%
+  pivot_longer(cols = c(2:52), names_to =&quot;State&quot; , values_to = &quot;Income&quot;)%&gt;%na.omit()
+rent1</code></pre>
+<pre><code>##                   State Rent.Estimate Income
+## 1               Alabama           747  47221
+## 2                Alaska          1200  75723
+## 3               Arizona           972  57100
+## 4              Arkansas           709  45907
+## 5            California          1358  66637
+## 6              Colorado          1125  70566
+## 7           Connecticut          1123  75923
+## 8              Delaware          1076  58046
+## 9  District of Columbia          1424  70982
+## 10              Florida          1077  51176
+## 11              Georgia           927  53527
+## 12               Hawaii          1507  72133
+## 13                Idaho           792  56564
+## 14             Illinois           952  61386
+## 15              Indiana           782  56094
+## 16                 Iowa           740  56247
+## 17               Kansas           801  56810
+## 18             Kentucky           713  45369
+## 19            Louisiana           825  42196
+## 20                Maine           808  50856
+## 21             Maryland          1311  73760
+## 22        Massachusetts          1173  72266
+## 23             Michigan           824  57091
+## 24            Minnesota           906  70218
+## 25          Mississippi           740  41099
+## 26             Missouri           784  55016
+## 27              Montana           751  57075
+## 28             Nebraska           773  59374
+## 29               Nevada          1017  55431
+## 30        New Hampshire          1052  76260
+## 31           New Jersey          1249  68468
+## 32           New Mexico           809  48451
+## 33             New York          1194  61437
+##  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 18 rows ]</code></pre>
+<p>Prior to pivoting, I omitted the NAs using the select function to make my dataset more neat.Since my original datasets were tidy, I disordered my data using pivot_wider. I untidied my datasets using one of the numeric columns (Uninsured in the 1st dataset and Income in the 2nd) along with the categorical column (State). Then, I reordered them using pivot_longer.</p>
+<pre class="r"><code>#Joining
+fulldata &lt;- state1%&gt;%full_join(rent1)
+fulldata</code></pre>
+<pre><code>##                   State Uninsured Unemployment Rent.Estimate Income
+## 1               Alabama         9          5.8           747  47221
+## 2                Alaska        14          6.9          1200  75723
+## 3               Arizona        12          5.4           972  57100
+## 4              Arkansas         8          4.0           709  45907
+## 5            California         8          5.5          1358  66637
+## 6              Colorado        10          3.2          1125  70566
+## 7           Connecticut         6          5.1          1123  75923
+## 8              Delaware         9          4.5          1076  58046
+## 9  District of Columbia         5          6.1          1424  70982
+## 10              Florida        12          4.8          1077  51176
+## 11              Georgia        12          5.4           927  53527
+## 12               Hawaii         5          3.0          1507  72133
+## 13                Idaho         9          3.8           792  56564
+## 14             Illinois         7          5.8           952  61386
+## 15              Indiana         7          4.4           782  56094
+## 16                 Iowa         5          3.6           740  56247
+## 17               Kansas         8          4.0           801  56810
+## 18             Kentucky         6          5.1           713  45369
+## 19            Louisiana        11          6.1           825  42196
+## 20                Maine         7          3.8           808  50856
+##  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 31 rows ]</code></pre>
+<p>I joined my datasets using the full_join function because I was interested in testing all of the variables used across the US.I did not need to drop any cases because each dataset contained all the values needed.</p>
+<pre class="r"><code>#Wrangling
+fulldata%&gt;%filter(between(Rent.Estimate, 600,900))</code></pre>
+<pre><code>##             State Uninsured Unemployment Rent.Estimate Income
+## 1         Alabama         9          5.8           747  47221
+## 2        Arkansas         8          4.0           709  45907
+## 3           Idaho         9          3.8           792  56564
+## 4         Indiana         7          4.4           782  56094
+## 5            Iowa         5          3.6           740  56247
+## 6          Kansas         8          4.0           801  56810
+## 7        Kentucky         6          5.1           713  45369
+## 8       Louisiana        11          6.1           825  42196
+## 9           Maine         7          3.8           808  50856
+## 10       Michigan         6          5.0           824  57091
+## 11    Mississippi        12          5.8           740  41099
+## 12       Missouri         8          4.6           784  55016
+## 13        Montana         7          4.1           751  57075
+## 14       Nebraska         7          3.1           773  59374
+## 15     New Mexico        11          6.6           809  48451
+## 16 North Carolina        11          5.1           844  53764
+## 17   North Dakota         8          3.1           775  60184
+## 18           Ohio         6          5.0           764  53985
+## 19       Oklahoma        11          4.8           766  50943
+## 20   Pennsylvania         5          5.4           885  60979
+##  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 6 rows ]</code></pre>
+<pre class="r"><code>fulldata%&gt;%select(State, Unemployment)</code></pre>
+<pre><code>##                   State Unemployment
+## 1               Alabama          5.8
+## 2                Alaska          6.9
+## 3               Arizona          5.4
+## 4              Arkansas          4.0
+## 5            California          5.5
+## 6              Colorado          3.2
+## 7           Connecticut          5.1
+## 8              Delaware          4.5
+## 9  District of Columbia          6.1
+## 10              Florida          4.8
+## 11              Georgia          5.4
+## 12               Hawaii          3.0
+## 13                Idaho          3.8
+## 14             Illinois          5.8
+## 15              Indiana          4.4
+## 16                 Iowa          3.6
+## 17               Kansas          4.0
+## 18             Kentucky          5.1
+## 19            Louisiana          6.1
+## 20                Maine          3.8
+## 21             Maryland          4.5
+## 22        Massachusetts          3.9
+## 23             Michigan          5.0
+## 24            Minnesota          3.9
+## 25          Mississippi          5.8
+## 26             Missouri          4.6
+## 27              Montana          4.1
+## 28             Nebraska          3.1
+## 29               Nevada          5.7
+## 30        New Hampshire          2.9
+## 31           New Jersey          5.0
+## 32           New Mexico          6.6
+## 33             New York          4.9
+## 34       North Carolina          5.1
+## 35         North Dakota          3.1
+## 36                 Ohio          5.0
+## 37             Oklahoma          4.8
+## 38               Oregon          4.8
+## 39         Pennsylvania          5.4
+## 40         Rhode Island          5.2
+## 41       South Carolina          5.0
+## 42         South Dakota          3.0
+## 43            Tennessee          4.7
+## 44                Texas          4.6
+## 45                 Utah          3.4
+## 46              Vermont          3.2
+## 47             Virginia          4.1
+## 48           Washington          5.3
+## 49        West Virginia          6.1
+## 50            Wisconsin          4.0
+##  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 1 rows ]</code></pre>
+<pre class="r"><code>fulldata%&gt;%arrange(desc(Income))</code></pre>
+<pre><code>##                   State Uninsured Unemployment Rent.Estimate Income
+## 1         New Hampshire         7          2.9          1052  76260
+## 2           Connecticut         6          5.1          1123  75923
+## 3                Alaska        14          6.9          1200  75723
+## 4              Maryland         6          4.5          1311  73760
+## 5         Massachusetts         6          3.9          1173  72266
+## 6                Hawaii         5          3.0          1507  72133
+## 7  District of Columbia         5          6.1          1424  70982
+## 8              Colorado        10          3.2          1125  70566
+## 9            Washington         7          5.3          1120  70310
+## 10            Minnesota         6          3.9           906  70218
+## 11           New Jersey         6          5.0          1249  68468
+## 12                 Utah        12          3.4           948  67481
+## 13           California         8          5.5          1358  66637
+## 14             Virginia        10          4.1          1166  66451
+## 15       South Carolina         9          5.0           836  65336
+## 16         Rhode Island         5          5.2           957  61528
+## 17             New York         6          4.9          1194  61437
+## 18             Illinois         7          5.8           952  61386
+## 19         Pennsylvania         5          5.4           885  60979
+## 20              Vermont         5          3.2           945  60837
+##  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 31 rows ]</code></pre>
+<pre class="r"><code>fulldata%&gt;%arrange(desc(Uninsured))</code></pre>
+<pre><code>##             State Uninsured Unemployment Rent.Estimate Income
+## 1           Texas        15          4.6           952  58146
+## 2          Alaska        14          6.9          1200  75723
+## 3         Arizona        12          5.4           972  57100
+## 4         Florida        12          4.8          1077  51176
+## 5         Georgia        12          5.4           927  53527
+## 6     Mississippi        12          5.8           740  41099
+## 7            Utah        12          3.4           948  67481
+## 8       Louisiana        11          6.1           825  42196
+## 9      New Mexico        11          6.6           809  48451
+## 10 North Carolina        11          5.1           844  53764
+## 11       Oklahoma        11          4.8           766  50943
+## 12      Tennessee        11          4.7           808  51344
+## 13       Colorado        10          3.2          1125  70566
+## 14       Virginia        10          4.1          1166  66451
+## 15        Wyoming        10          5.3           828  57829
+## 16        Alabama         9          5.8           747  47221
+## 17       Delaware         9          4.5          1076  58046
+## 18          Idaho         9          3.8           792  56564
+## 19         Nevada         9          5.7          1017  55431
+## 20 South Carolina         9          5.0           836  65336
+##  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 31 rows ]</code></pre>
+<pre class="r"><code>fulldata1 &lt;- fulldata[!is.na(fulldata$Unemployment),]
+fulldata1$jobless &lt;- ifelse(fulldata1$Unemployment&lt;median(fulldata1$Unemployment), &quot;Low&quot;, &quot;High&quot;)
+jobless &lt;- fulldata1$jobless
+fulldata1</code></pre>
+<pre><code>##                   State Uninsured Unemployment Rent.Estimate Income jobless
+## 1               Alabama         9          5.8           747  47221    High
+## 2                Alaska        14          6.9          1200  75723    High
+## 3               Arizona        12          5.4           972  57100    High
+## 4              Arkansas         8          4.0           709  45907     Low
+## 5            California         8          5.5          1358  66637    High
+## 6              Colorado        10          3.2          1125  70566     Low
+## 7           Connecticut         6          5.1          1123  75923    High
+## 8              Delaware         9          4.5          1076  58046     Low
+## 9  District of Columbia         5          6.1          1424  70982    High
+## 10              Florida        12          4.8          1077  51176    High
+## 11              Georgia        12          5.4           927  53527    High
+## 12               Hawaii         5          3.0          1507  72133     Low
+## 13                Idaho         9          3.8           792  56564     Low
+## 14             Illinois         7          5.8           952  61386    High
+## 15              Indiana         7          4.4           782  56094     Low
+## 16                 Iowa         5          3.6           740  56247     Low
+##  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 35 rows ]</code></pre>
+<pre class="r"><code>fulldata1%&gt;%group_by(jobless)</code></pre>
+<pre><code>## # A tibble: 51 x 6
+## # Groups:   jobless [2]
+##    State                Uninsured Unemployment Rent.Estimate Income jobless
+##  * &lt;fct&gt;                    &lt;int&gt;        &lt;dbl&gt;         &lt;int&gt;  &lt;int&gt; &lt;chr&gt;  
+##  1 Alabama                      9          5.8           747  47221 High   
+##  2 Alaska                      14          6.9          1200  75723 High   
+##  3 Arizona                     12          5.4           972  57100 High   
+##  4 Arkansas                     8          4             709  45907 Low    
+##  5 California                   8          5.5          1358  66637 High   
+##  6 Colorado                    10          3.2          1125  70566 Low    
+##  7 Connecticut                  6          5.1          1123  75923 High   
+##  8 Delaware                     9          4.5          1076  58046 Low    
+##  9 District of Columbia         5          6.1          1424  70982 High   
+## 10 Florida                     12          4.8          1077  51176 High   
+## # … with 41 more rows</code></pre>
+<pre class="r"><code>fulldata1 &lt;- fulldata1%&gt;%mutate(average= Rent.Estimate/Income)
+fulldata1</code></pre>
+<pre><code>##                   State Uninsured Unemployment Rent.Estimate Income jobless
+## 1               Alabama         9          5.8           747  47221    High
+## 2                Alaska        14          6.9          1200  75723    High
+## 3               Arizona        12          5.4           972  57100    High
+## 4              Arkansas         8          4.0           709  45907     Low
+## 5            California         8          5.5          1358  66637    High
+## 6              Colorado        10          3.2          1125  70566     Low
+## 7           Connecticut         6          5.1          1123  75923    High
+## 8              Delaware         9          4.5          1076  58046     Low
+## 9  District of Columbia         5          6.1          1424  70982    High
+## 10              Florida        12          4.8          1077  51176    High
+## 11              Georgia        12          5.4           927  53527    High
+## 12               Hawaii         5          3.0          1507  72133     Low
+## 13                Idaho         9          3.8           792  56564     Low
+## 14             Illinois         7          5.8           952  61386    High
+##       average
+## 1  0.01581923
+## 2  0.01584723
+## 3  0.01702277
+## 4  0.01544427
+## 5  0.02037907
+## 6  0.01594252
+## 7  0.01479130
+## 8  0.01853702
+## 9  0.02006142
+## 10 0.02104502
+## 11 0.01731836
+## 12 0.02089196
+## 13 0.01400184
+## 14 0.01550842
+##  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 37 rows ]</code></pre>
+<pre class="r"><code>summary &lt;- fulldata%&gt;%summarize(mean_uninsured= mean(Uninsured, na.rm=T), 
+                                n_rows= n(), n_state= n_distinct(State))
+summary</code></pre>
+<pre><code>##   mean_uninsured n_rows n_state
+## 1       8.215686     51      51</code></pre>
+<pre class="r"><code>fulldata1%&gt;%summary()</code></pre>
+<pre><code>##         State      Uninsured       Unemployment   Rent.Estimate   
+##  Alabama   : 1   Min.   : 5.000   Min.   :2.900   Min.   : 681.0  
+##  Alaska    : 1   1st Qu.: 6.000   1st Qu.:3.950   1st Qu.: 783.0  
+##  Arizona   : 1   Median : 8.000   Median :4.800   Median : 885.0  
+##  Arkansas  : 1   Mean   : 8.216   Mean   :4.675   Mean   : 941.4  
+##  California: 1   3rd Qu.:10.000   3rd Qu.:5.350   3rd Qu.:1076.5  
+##  Colorado  : 1   Max.   :15.000   Max.   :6.900   Max.   :1507.0  
+##  (Other)   :45                                                    
+##      Income        jobless             average       
+##  Min.   :41099   Length:51          Min.   :0.01211  
+##  1st Qu.:53874   Class :character   1st Qu.:0.01413  
+##  Median :58046   Mode  :character   Median :0.01570  
+##  Mean   :59339                      Mean   :0.01587  
+##  3rd Qu.:66544                      3rd Qu.:0.01717  
+##  Max.   :76260                      Max.   :0.02105  
+## </code></pre>
+<pre class="r"><code>fulldata1%&gt;%group_by(State, jobless)%&gt;%summarize(mean(Rent.Estimate),(mean(Income)))</code></pre>
+<pre><code>## # A tibble: 51 x 4
+## # Groups:   State [51]
+##    State                jobless `mean(Rent.Estimate)` `(mean(Income))`
+##    &lt;fct&gt;                &lt;chr&gt;                   &lt;dbl&gt;            &lt;dbl&gt;
+##  1 Alabama              High                      747            47221
+##  2 Alaska               High                     1200            75723
+##  3 Arizona              High                      972            57100
+##  4 Arkansas             Low                       709            45907
+##  5 California           High                     1358            66637
+##  6 Colorado             Low                      1125            70566
+##  7 Connecticut          High                     1123            75923
+##  8 Delaware             Low                      1076            58046
+##  9 District of Columbia High                     1424            70982
+## 10 Florida              High                     1077            51176
+## # … with 41 more rows</code></pre>
+<pre class="r"><code>fulldata1%&gt;%summarize(min(Rent.Estimate),min(Income))</code></pre>
+<pre><code>##   min(Rent.Estimate) min(Income)
+## 1                681       41099</code></pre>
+<pre class="r"><code>fulldata1%&gt;%summarize(max(Rent.Estimate), max(Income))</code></pre>
+<pre><code>##   max(Rent.Estimate) max(Income)
+## 1               1507       76260</code></pre>
+<pre class="r"><code>fulldata1%&gt;%summarize(mean(Rent.Estimate),(mean(Income)))</code></pre>
+<pre><code>##   mean(Rent.Estimate) (mean(Income))
+## 1            941.4314       59338.86</code></pre>
+<pre class="r"><code>fulldata1%&gt;%summarize(sd(Rent.Estimate), sd(Income))</code></pre>
+<pre><code>##   sd(Rent.Estimate) sd(Income)
+## 1          204.1532   9086.831</code></pre>
+<pre class="r"><code>fulldata1%&gt;%summarize(n_distinct(Rent.Estimate), n_distinct(Income))</code></pre>
+<pre><code>##   n_distinct(Rent.Estimate) n_distinct(Income)
+## 1                        48                 51</code></pre>
+<p>Using the filter function, I was able to narrow down the states with rent estimates between $600-$900 a month on average and then used the select funciton to only pair up the “State” and “Unemployment” columns. Using the arrange function I was able to conclude that New Hampshire has the highest income on average between all US states and that Texas has the highest uninsured rate reaching 15%. Then I created a new categorical variable called “jobless” and used the group_by function to observe which cities have high and low unemployment rates.Surprinsingly, Texas has a low unemployment rate despite the fact that there are a lot of uninsured individuals in the state. Using the mutate function I created an average variable to see the portion of the income that solely goes towards the rent.</p>
+<p>In the summary functions, the first table demonstrates the rent and income means in every state along with the “jobless” column which ranks whether a state’s unemployment rate is high or low.The second tables indicates the minimums of both the rent and the income in the US. The rent minimum is $681 while the income minimum is $41099. The maximum values of both of those variables are $1507 for rent and $76260 for the income. Using both the standard deviation and the mean functions, I realized that the rent is more numerically diverse than the income. The n_distinct function revealed that there are 48 unique values in the Rent.Estimate set and 51 in the Income set.</p>
+<pre class="r"><code>#Visualizing
+#install.packages(&quot;ggplot2&quot;)
+library(ggplot2)
+fulldata1%&gt;%select_if(is.numeric)%&gt;%cor%&gt;%as.data.frame%&gt;%rownames_to_column%&gt;%
+  pivot_longer(-1)%&gt;%ggplot(aes(rowname,name,fill=value))+geom_tile()+
+  geom_text(aes(label=round(value,2)))+xlab(&quot;&quot;)+ylab(&quot;&quot;)+ scale_fill_gradient2(low=&quot;green&quot;, high=&quot;red&quot;)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>fulldata1%&gt;%filter(State==&quot;California&quot;|State==&quot;Texas&quot;|State==&quot;Colorado&quot;|State==&quot;Minnesota&quot;)%&gt;%
+  ggplot(aes(x= State, y= Unemployment, fill= State))+
+  geom_bar(stat=&quot;summary&quot;, fun.y=&quot;mean&quot;, position=&quot;dodge&quot;)+ 
+  facet_wrap(~jobless)+
+  ggtitle(&quot;Graph 1: Unemployment Rates in Different Parts of the US&quot;) + 
+  theme(axis.text.x = element_blank(), legend.position = &quot;left&quot;)+ scale_y_continuous(breaks=seq(0,6,1))</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-5-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>fulldata1%&gt;%ggplot(aes(x=Rent.Estimate,y=Income))+geom_point(size=3, aes(color=Uninsured))+
+  scale_color_gradient(low=&quot;yellow&quot;, high=&quot;red&quot;)+
+  ggtitle(&quot;Graph 2: Uninsured Variance According to Income and Rent in the US&quot;)+ 
+  xlab(&quot;Rent Estimate&quot;)+ 
+  scale_y_continuous(breaks = seq(40000, 70000, 10000))</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-5-3.png" width="672" style="display: block; margin: auto;" /></p>
+<p>In graph 1, I picked out several states in different parts of the US to take a glimpse at their unemployment rates and where they fall in the ranking of whether their unemployment rate is high or low. California scored the highest unemployment rate which naturally would put the state in the “High” side of the graph, while the other states remained on the “Low” side. Texas scored the second highest state of unemployment rates followed by Minnesota allowing Colorado to score the lowerst between all 4 states chosen.</p>
+<p>In graph 2, the rent estimate and the income are mapped against each other along with the uninsured rates. By looking at the graph, most of the US population falls in the low to low-middle rates of the Uninsured, which is better than what I was expecting. The graph also shows that the higher the income the lower the Uninsured rate because as the income increases on the y-axis, the concentration of Uninsured obervations begins to attenuate.</p>
+<pre class="r"><code>#Dimentionality Reduction
+library(cluster)
+pam1 &lt;- fulldata1%&gt;%pam(k=3)
+pam1</code></pre>
+<pre><code>## Medoids:
+##      ID State Uninsured Unemployment Rent.Estimate Income jobless    average
+## [1,]  1     1         9          5.8           747  47221      NA 0.01581923
+## [2,]  6     6        10          3.2          1125  70566      NA 0.01594252
+## [3,] 42    42         8          3.0           696  57450      NA 0.01211488
+## Clustering vector:
+##  [1] 1 2 3 1 2 2 2 3 2 1 3 2 3 3 3 3 3 1 1 1 2 2 3 2 1 3 3 3 3 2 2 1 3 3 3 3 1 3
+## [39] 3 3 2 3 1 3 2 3 2 2 1 3 3
+## Objective function:
+##    build     swap 
+## 2711.352 2683.352 
+## 
+## Available components:
+##  [1] &quot;medoids&quot;    &quot;id.med&quot;     &quot;clustering&quot; &quot;objective&quot;  &quot;isolation&quot; 
+##  [6] &quot;clusinfo&quot;   &quot;silinfo&quot;    &quot;diss&quot;       &quot;call&quot;       &quot;data&quot;</code></pre>
+<pre class="r"><code>pamclust&lt;-fulldata1%&gt;% mutate(cluster=as.factor(pam1$clustering))
+pamclust %&gt;% ggplot(aes(Income,Uninsured,color=jobless,shape=cluster)) + geom_point()</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>The area of greatest concentration in the data lies at the intersection of ~$58,000 in annual income and uninsured rate of ~7.5%. It can also be concluded that the states with higher unemployment or “jobless” rates fall in the area of the graph of annual incomes &lt;60,000 while the states with low unemployment rates fall in the area of annual income &gt;60,000.</p>
+
+              <hr>
+              <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div>
+            </div>
+          </div>
+          <hr>
+        <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+        </div>
+      </div>
+      
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="/js/docs.min.js"></script>
+<script src="/js/main.js"></script>
+
+<script src="/js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

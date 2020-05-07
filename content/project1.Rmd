@@ -1,0 +1,125 @@
+---
+title: 'Project 1: Exploratory Data Analysis'
+author: "Nisrine Sawaya"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+For this project, I chose to observe different economic variables across all the US states. The first dataset "state" contains both unemployment and uninsured rates of individuals across all 50 states and District of Columbia. The second dataset "rent" covers the rent estimates and the income in dollar amount across the 50 states and District of Columbia. I acquired these datasets from my friend, who is an economics student at UT, because I was interested to observe whether there was any relationship between all the variables mentioned and which variables affected the states the most back in 2016.
+
+```{r}
+#Datasets:
+#Dataset #1
+#write.csv(LEstate_data,"statedata.csv")
+state <- read.csv("statedata.csv")
+#Dataset #2
+#write.csv(Rent_Estimate_Across_US_States, "rentdata.csv")
+rent <- read.csv("rentdata.csv")
+```
+
+```{R}
+#Tidying
+#install.packages("tidyverse")
+library(tidyverse)
+library(tidyr)
+library(dplyr) 
+
+#Tidying Dataset #1
+state1 <- state%>%select(-X)
+untidystate <- state1%>%pivot_wider(names_from= "State", values_from = "Uninsured")
+tidystate <- untidystate%>%
+  pivot_longer(cols=c(2:52), names_to = "State", values_to = "Uninsured")%>%
+  na.omit()
+state1
+
+#Tidying Dataset #2
+rent1 <-rent%>%select(-X)
+untidyrent <- rent1%>%pivot_wider(names_from= "State", values_from = "Income")
+tidyrent <- untidyrent%>%
+  pivot_longer(cols = c(2:52), names_to ="State" , values_to = "Income")%>%na.omit()
+rent1
+```
+
+Prior to pivoting, I omitted the NAs using the select function to make my dataset more neat.Since my original datasets were tidy, I disordered my data using pivot_wider. I untidied my datasets using one of the numeric columns (Uninsured in the 1st dataset and Income in the 2nd) along with the categorical column (State). Then, I reordered them using pivot_longer.
+
+```{R}
+#Joining
+fulldata <- state1%>%full_join(rent1)
+fulldata
+```
+I joined my datasets using the full_join function because I was interested in testing all of the variables used across the US.I did not need to drop any cases because each dataset contained all the values needed.  
+
+```{r}
+#Wrangling
+fulldata%>%filter(between(Rent.Estimate, 600,900))
+fulldata%>%select(State, Unemployment)
+fulldata%>%arrange(desc(Income))
+fulldata%>%arrange(desc(Uninsured))
+fulldata1 <- fulldata[!is.na(fulldata$Unemployment),]
+fulldata1$jobless <- ifelse(fulldata1$Unemployment<median(fulldata1$Unemployment), "Low", "High")
+jobless <- fulldata1$jobless
+fulldata1
+fulldata1%>%group_by(jobless)
+fulldata1 <- fulldata1%>%mutate(average= Rent.Estimate/Income)
+fulldata1
+summary <- fulldata%>%summarize(mean_uninsured= mean(Uninsured, na.rm=T), 
+                                n_rows= n(), n_state= n_distinct(State))
+summary
+fulldata1%>%summary()
+fulldata1%>%group_by(State, jobless)%>%summarize(mean(Rent.Estimate),(mean(Income)))
+fulldata1%>%summarize(min(Rent.Estimate),min(Income))
+fulldata1%>%summarize(max(Rent.Estimate), max(Income))
+fulldata1%>%summarize(mean(Rent.Estimate),(mean(Income)))
+fulldata1%>%summarize(sd(Rent.Estimate), sd(Income))
+fulldata1%>%summarize(n_distinct(Rent.Estimate), n_distinct(Income))
+
+```
+Using the filter function, I was able to narrow down the states with rent estimates between $600-$900 a month on average and then used the select funciton to only pair up the "State" and "Unemployment" columns. Using the arrange function I was able to conclude that New Hampshire has the highest income on average between all US states and that Texas has the highest uninsured rate reaching 15%. Then I created a new categorical variable called "jobless" and used the group_by function to observe which cities have high and low unemployment rates.Surprinsingly, Texas has a low unemployment rate despite the fact that there are a lot of uninsured individuals in the state. Using the mutate function I created an average variable to see the portion of the income that solely goes towards the rent.
+
+In the summary functions, the first table demonstrates the rent and income means in every state along with the "jobless" column which ranks whether a state's unemployment rate is high or low.The second tables indicates the minimums of both the rent and the income in the US. The rent minimum is $681 while the income minimum is $41099. The maximum values of both of those variables are $1507 for rent and $76260	for the income. Using both the standard deviation and the mean functions, I realized that the rent is more numerically diverse than the income. The n_distinct function revealed that there are 48 unique values in the Rent.Estimate set and 51 in the Income set.     
+
+```{r}
+#Visualizing
+#install.packages("ggplot2")
+library(ggplot2)
+fulldata1%>%select_if(is.numeric)%>%cor%>%as.data.frame%>%rownames_to_column%>%
+  pivot_longer(-1)%>%ggplot(aes(rowname,name,fill=value))+geom_tile()+
+  geom_text(aes(label=round(value,2)))+xlab("")+ylab("")+ scale_fill_gradient2(low="green", high="red")
+
+fulldata1%>%filter(State=="California"|State=="Texas"|State=="Colorado"|State=="Minnesota")%>%
+  ggplot(aes(x= State, y= Unemployment, fill= State))+
+  geom_bar(stat="summary", fun.y="mean", position="dodge")+ 
+  facet_wrap(~jobless)+
+  ggtitle("Graph 1: Unemployment Rates in Different Parts of the US") + 
+  theme(axis.text.x = element_blank(), legend.position = "left")+ scale_y_continuous(breaks=seq(0,6,1))
+
+
+
+fulldata1%>%ggplot(aes(x=Rent.Estimate,y=Income))+geom_point(size=3, aes(color=Uninsured))+
+  scale_color_gradient(low="yellow", high="red")+
+  ggtitle("Graph 2: Uninsured Variance According to Income and Rent in the US")+ 
+  xlab("Rent Estimate")+ 
+  scale_y_continuous(breaks = seq(40000, 70000, 10000))
+
+```
+
+In graph 1, I picked out several states in different parts of the US to take a glimpse at their unemployment rates and where they fall in the ranking of whether their unemployment rate is high or low. California scored the highest unemployment rate which naturally would put the state in the "High" side of the graph, while the other states remained on the "Low" side. Texas scored the second highest state of unemployment rates followed by Minnesota allowing Colorado to score the lowerst between all 4 states chosen. 
+
+In graph 2, the rent estimate and the income are mapped against each other along with the uninsured rates. By looking at the graph, most of the US population falls in the low to low-middle rates of the Uninsured, which is better than what I was expecting. The graph also shows that the higher the income the lower the Uninsured rate because as the income increases on the y-axis, the concentration of Uninsured obervations begins to attenuate. 
+
+```{r}
+#Dimentionality Reduction
+library(cluster)
+pam1 <- fulldata1%>%pam(k=3)
+pam1
+pamclust<-fulldata1%>% mutate(cluster=as.factor(pam1$clustering))
+pamclust %>% ggplot(aes(Income,Uninsured,color=jobless,shape=cluster)) + geom_point()
+```
+
+The area of greatest concentration in the data lies at the intersection of ~$58,000 in annual income and uninsured rate of ~7.5%. It can also be concluded that the states with higher unemployment or "jobless" rates fall in the area of the graph of annual incomes <60,000 while the states with low unemployment rates fall in the area of annual income >60,000. 
+```{R}
+

@@ -1,0 +1,341 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "Nisrine Sawaya (ns28677)"
+date: "April, 22, 2020"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  word_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+```{R}
+#Packages
+library(tidyr); library(ggplot2); library(lmtest); library(dplyr); library(tidyverse)
+#Dataset
+#write.csv(USA_arrests,"USAarrests.csv")
+arrests <- read.csv("USAarrests.csv")
+#Tidying Data
+arrests <- arrests%>%select(-X)
+arrests
+```
+
+My data covers the number of murder arrests, unemployment rates, urban population size, average income, location and political affiliation across all 50 states in the USA. No N/As were found in my dataset, therefore I have 50 observations for each variable. My response variable is the "Murder" variable where I wanted to see if any of the other variables play a role in affecting the number of murder arrests across the states. I got the biggest part of my data from a dataset already installed in R studio and added the "Income" and "Unemployment" variables from my first project. I used google to research both of my categorical variables "Location" and "Affiliation" to complete my dataset. The binary variable is "Affilition," where 0 means red/Replublican and 1 means blue/Democrat. As for the location, 0 means South, 1 means West, 2 means East, 3 means North, and 4 means Midwest. 
+
+```{R}
+#install.packages('mvtnorm'), install.packages('ggExtra')
+library(mvtnorm); library(ggExtra)
+
+#MANOVA between numeric variables and Location Columns to see if 
+#the location of the state plays a significant role in the findings
+man <- manova(cbind(Murder, UrbanPop, Unemployment, Income)~Location, data=arrests)
+summary(man)
+
+#Unvariate ANOVA
+summary.aov(man) 
+
+#T-tests
+test <- arrests%>%group_by(Location)%>%
+  summarize(mean(Murder), mean(UrbanPop), mean(Unemployment), mean(Income))
+test
+
+#Post-Hoc Test
+#install.packages('vegan')
+library(vegan)
+pairwise.t.test(arrests$Murder, arrests$Location, p.adj="none")
+pairwise.t.test(arrests$UrbanPop, arrests$Location, p.adj="none")
+pairwise.t.test(arrests$Unemployment, arrests$Location, p.adj="none")
+pairwise.t.test(arrests$Income, arrests$Location, p.adj="none")
+
+#Probablity of at least type-I error
+1-(0.95^9) #0.3697506
+
+#Bonferroni's Adjusted Correction ("alpha")
+0.05/9 #0.005555556
+```
+I used the overall MANOVA test to observe whether my numeric variables (Murder, Income, Unemployment, and UrbanPop) have an effect on my categorical variable "Location." I got a significance result so I moved to the univariate ANOVA tests to narrow down which of the variables are causing this result obtained. Turned out that unemployment rates and average incomes are dignificantly different depending on the location of the state, which was not too surprising due to the demographic and job market saturation throughout US states. After running all the tests necessary, the total number of tests run turned out to be equal to 9 tests. The overall Type I error remains equal to 0.05. The probability that at least one type I error is arounf 0.37. The Bonferroni adjusted significance level used to keep the overall type I error rate at .05 is around 0.0056. After doing all the tests and still getting the Bonferroni correction around 0.05, we can conclude that only the income and unmployment variables were found to significantly differ from each other before and after adjustment. From the assumptions, there was no correlation between the variables which was beneficial. However, the MANOVA test automatically assumes that the distibution is normal and the sample is random which I think were the 2 biggest violations.
+
+```{R}
+#install.packages('vegan'); install.packages('lmtest')
+library(vegan); library(lmtest)
+
+cor(arrests$Murder,arrests$Unemployment)#0.6067134
+dists <- arrests%>%select(Murder, Unemployment)%>%dist()
+adonis(dists~Affiliation, data=arrests)
+
+SST<- sum(dists^2)/150 
+SSW<-arrests%>%group_by(Affiliation)%>%select(Unemployment,Murder)%>%
+  do(d=dist(.[2:3],"euclidean"))%>%ungroup()%>% 
+  summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50+ sum(d[[2]]^2)/50)%>%pull
+F_obs<-((SST-SSW)/2)/(SSW/147) #observed F statistic
+
+Fs <- replicate(1000, {
+  new <- arrests%>%mutate(Affiliation= sample(Affiliation))
+  SSW <- SW<-new%>%group_by(Affiliation)%>%select(Unemployment,Murder)%>%
+    do(d=dist(.[2:3],"euclidean"))%>%ungroup()%>% 
+    summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50+ sum(d[[2]]^2)/50)%>%pull
+  ((SST-SSW)/2)/(SSW/147)
+})
+
+{hist(Fs, prob=T);abline(v=F_obs, col="purple", add=T)}
+mean(Fs>F_obs)
+```
+
+For this portion of the project, I wanted to test whether greater unemployment rates are associated with greater number of murder arrests across US states. Before applying any randomization tests, the actual correlation between the numeric variables is 0.6067134. After conducting randomization testing and breaking the correlation, I replicated the sample 1000 times to get as much of a randomization effect as possible. For this part, the null hypothesis would be that murder and unemployment are not correlated, therefore they each act independently of each other. The alternative hypothesis however, would indicate that unemployment does indeed affect murder arrest numbers. The actual mean difference is 0.087, which is very small meaning that we can reject the null hypothesis. Therefore, we would be able to conclude that unemployment has a significant effect on the number of murder arrests across all states.From the relative frequency histogram of Fs, it is visible that Fs are notmally distributed between -30 and -40 with right skew and a mean occurring between -36 and -38.
+
+```{R}
+#Mean Centering Murder, Income and Urbanpop Variables
+arrests$murder_c <- arrests$Murder-mean(arrests$Murder, na.rm=T) 
+arrests$urbanpop_c <- arrests$UrbanPop-mean(arrests$UrbanPop, na.rm=T)
+arrests$income_c <- arrests$Income-mean(arrests$Income, na.rm=T)
+
+#Linear Regression
+pred <- lm(murder_c~urbanpop_c*income_c, data=arrests, family="binomial")
+summary(pred)
+
+#Plotting murder_c vs income_c vs urbanpop_c (Code from Worksheet #15)
+new1 <- arrests
+new1$urbanpop_c <- mean(arrests$urbanpop_c)
+new1$mean <- predict(pred, new1)
+new1$urbanpop_c <- mean(arrests$urbanpop_c)+sd(arrests$urbanpop_c)
+new1$plus.sd <- predict(pred, new1)
+new1$urbanpop_c <- mean(arrests$urbanpop_c)-sd(arrests$urbanpop_c)
+new1$minus.sd <- predict(pred, new1)
+newint <- new1%>%select(murder_c, urbanpop_c, mean, plus.sd, minus.sd)%>%
+  gather(income_c, value, -murder_c, -urbanpop_c)
+mycols<-c("#619CFF","#F8766D","#00BA38")
+names(mycols)<-c("-1 sd","mean","+1 sd")
+mycols=as.factor(mycols)
+ggplot(arrests,aes(income_c, murder_c),group=mycols)+
+  geom_point()+geom_line(data=new1,aes(y=mean,color="mean"))+
+  geom_line(data=new1,aes(y=plus.sd,color="+1 sd"))+
+  geom_line(data=new1,aes(y=minus.sd,color="-1 sd"))+scale_color_manual(values=mycols)+
+  labs(color="UrbanPop")+theme(legend.position=c(.9,.2))
+
+#Checking for linearity, normality, and homoskedasticity
+shapiro.test(arrests$urbanpop_c); shapiro.test(arrests$murder_c); shapiro.test(arrests$income_c)
+plot(pred)
+
+#Recomputing Regression
+#install.packages('microbenchmark'); install.packages('sandwich')
+library(sandwich); library(microbenchmark);library(lmtest) 
+coeftest(pred,vcov=vcovHC(pred, family='binomial'(link='logit')))
+
+#Odds Ratio
+exp(coef(pred))
+
+#Variation
+odds2prob <- function(odds) { odds/(1 + odds)}
+```
+
+For the linear regression part of this project, I decided to predict my "Murder" variable from the "Income" and "Unemployment" variables to observe if income and unemployment changes affect the rise or drop of murder arrests across US states. I would like to note that all of the variables used were centered in advance. The intercept coefficient means that the predicted murder arrests (murder_c) across the states is 0.23 when urbanpop_c and income_c are 0. The coefficient of urbanpop_c means that for every 1 unit increase in urban_pop there is a 0.078 increase in murder arrests across US states. The coefficient of income_c means every 1 unit increase in income_c, the number of murder arrests decreases by 0.00025. When  thinking about neighborhoods, wealthier ones have lower murder arrests rates than poorer neighborhoods. And usually the wealthy neighborhoods are not found in the rural areas. The coefficient of urbanpop_c:income_c means that the effect of urban_pop on muder_c arrests is lower than the effect of income_c on murder_c arrests. 
+The graph generated shows that the income variable affects the number of murder arrests across states more significantly than the urban population variable. At greater UrbanPop levels (+1sd) the decrease in murder arrests is steeper than when UrbanPop is at the mean or -1sd levels. Therefore, average income has a mor significant effect in decreasinf murder rate than UrbanPop.
+After recomputing the regression results, not a lot of changes were observed. However, the p-values of the variables and the intercation slightly increased but the significance of the income_c variable persisted. 
+
+```{R}
+#Rerunning Regression Model & Boostrapping
+boot <- arrests$murder_c%>%sort+ arrests$urbanpop_c%>%sort+ arrests$income_c%>%sort
+summary(boot)
+sd(boot)
+boot%>%mean
+samp1<-sample(boot,replace=T) 
+sort(samp1)
+mean(samp1)
+means<-vector()
+for(i in 1:5000){
+samp<-sample(boot,replace=T) 
+means[i]<-mean(samp) 
+}
+quantile(means,c(0.025,0.975))
+
+ggplot()+geom_histogram(aes(means))+geom_vline(xintercept=quantile(means,c(.025,.975)))
+
+#Bootstrapping
+sd(means)
+ggplot()+geom_histogram(aes(means))+ geom_vline(xintercept=mean(means)+c(-1,1)*sd(means))
+
+
+```
+
+From both of the graphs in this section, we can conclude that the range of the means have decreased after bootstrapping. The standard deviation value decreased as the mean range increased. Therefore, the relationship between both elements is inverse. Using the bootstrap method definitely narrows down ranges and allows us to focus more on the variables intercating. 
+
+```{R}
+#Logistic Regression
+#Explaining the binary variable 
+data1 <-arrests%>%mutate(y=ifelse(Affiliation=="democratic",1,0))
+
+#Predicting political affiliation from murder rate and urbanization across states
+fitt <-glm(Affiliation~Murder+UrbanPop,data=data1,family='binomial'(link="logit"))
+coeftest(fitt)
+exp(coef(fitt))
+
+#Confusion Matrix
+prob <-predict(fitt,type="response") 
+pred<-ifelse(prob>.5,1,0)
+table(predict=as.numeric(prob>.5),truth=data1$Affiliation)%>%addmargins
+
+#Calculating Accuracy, Sensitivity (TPR), Specificity (TNR) and Recall (PPV)
+(25+13)/50 #accuracy
+(25/32) #tpr
+(13/18) #tnr
+(25/30) #ppv
+
+#predicted logit (log-odds)
+predict(fitt, newdata=data.frame(Murder=10, UrbanPop=10), type="link")
+#predicted probability
+predict(fitt, newdata= data.frame(Murder=10, UrbanPop=10), type="response")
+
+#ggplot 
+data1$logit<-predict(fitt,type="link")
+data1%>%ggplot(aes(logit,color=Affiliation,fill=Affiliation))+
+  geom_density(alpha=.4, color="red", fill="purple", linetype="dashed")+ 
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab("predictor (logit)")
+
+#ROC Curve and AUC
+#install.packages('plotROC')
+library(plotROC)
+ROCplot<-ggplot(data1)+geom_roc(aes(d=Affiliation, m=prob), n.cuts=0)
+ROCplot
+calc_auc(ROCplot) #0.785
+
+#class_diag Function
+class_diag<-function(probs,truth) {
+if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth) 
+prediction<-ifelse(probs>.5,1,0) 
+acc=mean(truth==prediction) 
+sens=mean(prediction[truth==1]==1) 
+spec=mean(prediction[truth==0]==0) 
+ppv=mean(truth[prediction==1]==1)
+
+#CALCULATE EXACT AUC
+ord<-order(probs, decreasing=TRUE)
+probs <- probs[ord]; truth <- truth[ord]
+TPR=cumsum(truth)/max(1,sum(truth)) 
+FPR=cumsum(!truth)/max(1,sum(!truth))
+dup<-c(probs[-1]>=probs[-length(probs)], FALSE) 
+TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+n <- length(TPR)
+auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+data.frame(acc,sens,spec,ppv,auc) 
+}
+
+#Testing class_diag function
+#install.packages("pROC")
+#citation("pROC")
+library(pROC)
+class_diag(prob, arrests$Affiliation) 
+auc(arrests$Affiliation,prob) #0.785
+
+#10 Fold
+set.seed(1234)
+k=10 
+data2<-arrests[sample(nrow(arrests)),] 
+folds<-cut(seq(1:nrow(arrests)),breaks=k,labels=F) 
+diags<-NULL 
+for(i in 1:k){
+train<-data2[folds!=i,] 
+test<-data2[folds==i,]
+truth<-test$Affiliation
+fitt1<-glm(Affiliation~Murder+UrbanPop,data=train,family="binomial") 
+probs<-predict(fitt1,newdata = test,type="response")
+diags<-rbind(diags,class_diag(probs,truth)) 
+}
+summarize_all(diags,mean)
+```
+
+From the coefficient estimate we can conclude that the UrbanPop variable has a significant effect on the political affiliation of the state across the US. After exponentiating the coefficient estimates we can interpret that controlling for UrbanPop, for every 1-unit increase in Murder, odds of political affiliation change by a factor of 0.85. On the other hand, controlling for Murder, for every 1-unit increase in UrbanPop, odds of political affiliation change by a factor of 1.09 which confirms that the UrbanPop variable plays a bigger role when it comes to the state's affiliation. 
+Referencing the methods used on slide 21 in the powerpoint, I calculated and obtained the following values: Accuracy is 0.76, Sensitivity (TPR) is 0.78, Specificity (TNR) is 0.72 and Recall (PPV) is 0.83. 
+After generating the ROC curve and calculating the AUC value, it turned out that the area under the curve is equal to 0.785, which is an average value. After performing the 10-Fold, the values obtained slightly decreased. Accuracy became 0.72, Sensitivity decreased to 0.76 and Recall turned out to be 0.67. The decrease in those variables also led to a slight decrease in AUC which ended up being 0.75. However, there was not a drastic change before and after computing the 10-Fold. 
+
+
+```{R}
+#LASSO
+#class_diag Function
+class_diag<-function(probs,truth){
+if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) 
+truth<-as.numeric(truth)-1
+tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth) 
+prediction<-ifelse(probs>.5,1,0) 
+acc=mean(truth==prediction) 
+sens=mean(prediction[truth==1]==1) 
+spec=mean(prediction[truth==0]==0) 
+ppv=mean(truth[prediction==1]==1)
+
+#CALCULATE EXACT AUC
+ord<-order(probs, decreasing=TRUE)
+probs <- probs[ord]; truth <- truth[ord]
+TPR=cumsum(truth)/max(1,sum(truth)) 
+FPR=cumsum(!truth)/max(1,sum(!truth))
+dup<-c(probs[-1]>=probs[-length(probs)], FALSE) 
+TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+n <- length(TPR)
+auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+data.frame(acc,sens,spec,ppv,auc) 
+}
+
+#install.packages("glmnet")
+library(glmnet) 
+fitt2<-glm(Affiliation~Location+UrbanPop+Unemployment+Income+Murder, data=arrests)
+summary(fitt2)
+prob1<-predict(fitt2,type="response") 
+library(pROC)
+class_diag(prob1, arrests$Affiliation) 
+auc(arrests$Affiliation,prob1)#0.8317
+
+#LASSO Regression
+y<-as.matrix(arrests$Affiliation) 
+x<-model.matrix(Affiliation~.,data=arrests)[,-1]
+head(x)
+x <- scale(x)
+cv <- cv.glmnet(x,y)
+lasso<-glmnet(x,y,family="binomial",lambda=cv$lambda.1se) 
+coef(lasso)
+
+#Cross Validating the LASSO Model and 10 Fold
+set.seed(1234) 
+k=10
+data3 <- arrests%>% sample_frac 
+folds1 <- ntile(1:nrow(data3),n=10) 
+diags1<-NULL 
+for(i in 1:k){
+train1 <- data3[folds1!=i,] 
+test1 <- data3[folds1==i,] 
+truth1 <- test1$Affiliation
+fitt3 <- glm(Affiliation~UrbanPop+Income+income_c, data=train1, family="binomial")
+probs <- predict(fitt3, newdata=test1, type="response") 
+diags1 <-rbind(diags1,class_diag(probs,truth1))
+} 
+diags1%>%summarize_all(mean) 
+```
+
+LASSO regression indicates that the variables affecting the political affiliation of the states are mainly UrbanPop levels and average Incomes along with income_c. The first AUC obtained from this portion is equal to 0.83 but dropped to 0.77 after the 10-Fold which indicates that the model is more fit. But comparing this model to the previous section the AUC and ACC values are unfortunately very close therefore I did not see any significance or better fit when running the 10-Fold LASSO regression.  
+
+
+
+
+
