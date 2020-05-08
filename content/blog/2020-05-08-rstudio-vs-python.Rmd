@@ -1,0 +1,21 @@
+---
+title: RStudio vs. Python
+author: ''
+date: '2020-05-08'
+slug: rstudio-vs-python
+categories: []
+tags: []
+description: ''
+---
+
+My blog post
+
+```{R}
+#Using RStudio
+x <- "dog"
+```
+
+```{python}
+#Using Python
+print (r.x)
+````

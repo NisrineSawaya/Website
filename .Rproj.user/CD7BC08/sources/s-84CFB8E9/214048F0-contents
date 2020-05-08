@@ -1,6 +1,0 @@
-install.packages("blogdown")
-blogdown::install_hugo()
-blogdown::new_site(theme="nurlansu/hugo-sustain")
-read.csv("rentdata copy.csv")
-read.csv("statedata copy.csv")
-read.csv("USAarrests copy.csv")
