@@ -8,7 +8,6 @@ tags: []
 description: ''
 ---
 
-My blog post
 
 ```{R}
 #Using RStudio to index
