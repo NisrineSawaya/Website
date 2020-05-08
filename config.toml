@@ -22,7 +22,6 @@ theme = "hugo-sustain"
 [params.social]
   Github        = "NisrineSawaya"
   Email         = "nisrinesawaya13@gmail.com"
-  LinkedIn      = "Nisrine Sawaya"
 
 ## Main Menu
 [[menu.main]]
