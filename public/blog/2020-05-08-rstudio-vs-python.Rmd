@@ -7,3 +7,15 @@ categories: []
 tags: []
 description: ''
 ---
+
+My blog post
+
+```{R}
+#Using RStudio
+x <- "dog"
+```
+
+```{python}
+#Using Python
+print (r.x)
+````
