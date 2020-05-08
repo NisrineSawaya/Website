@@ -11,11 +11,47 @@ description: ''
 My blog post
 
 ```{R}
-#Using RStudio
+#Using RStudio to index
 x <- "dog"
+x
+
+#Using RStudio to create lists
+y <- list (1, 3, 5) #creating vector is only applicable to R
+print(y)
+z <- list("a","b","c")
+print(z)
+
+#Using RStudio to extract elements from lists
+y[1] #notice in R counting starts at 1
+z[3]
+
+#Creating ranges in RStudio
+list <- c(1:5)
+list #notice the last element is 5.
+
+#Grabbing even numbers in RStudio
+list[lapply(list, "%%", 2) == 0]
+
 ```
 
 ```{python}
-#Using Python
+#Using Python to print
 print (r.x)
+
+#Using Python to create lists
+list1 =[1,3,5]
+list1
+list2=['a','b','c']
+list2
+
+#Using Python to extract elements from lists
+list1[0] #notice in Python counting starts at 0 
+list2[2]
+
+#Creating ranges in Python
+plist= list(range(5))
+plist #notice the last element is number 4 not 5. 
+
+#Grabbing odd number from 1 to 5
+plist[0:6:2] 
 ````
